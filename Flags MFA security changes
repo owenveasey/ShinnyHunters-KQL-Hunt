@@ -1,0 +1,23 @@
+// Use: Hunting for unauthorized MFA persistence (e.g., ShinyHunters, Scattered Spider)
+// Logic: Compares 24-hour MFA changes against a 90-day historical baseline of successful user logins.
+
+let UserHistory = SigninLogs
+    | where TimeGenerated > ago(90d)
+    | where ResultType == 0
+    // Normalize to lowercase for the join
+    | extend UserLower = tolower(UserPrincipalName)
+    | summarize KnownIPs = make_set(IPAddress) by UserLower;
+AuditLogs
+| where TimeGenerated > ago(24h)
+| where OperationName has_any ("Add registered-device", "Update user", "User registered security info")
+| extend User = tostring(TargetResources[0].userPrincipalName)
+| extend UserLower = tolower(User) 
+| extend MFA_Change_IP = tostring(InitiatedBy.user.ipAddress)
+| extend Location = tostring(InitiatedBy.user.location)
+// --- NOISE SUPPRESSION ---
+// Add your Corporate Egress IPs and known Service Provider IPs here
+// Example: | where MFA_Change_IP !startswith "x.x.x.x"
+// -------------------------
+| join kind=inner UserHistory on UserLower
+| where KnownIPs !contains MFA_Change_IP
+| project TimeGenerated, User, MFA_Change_IP, Location, KnownIPs
