@@ -1,6 +1,7 @@
 // Use: Hunting for unauthorized MFA persistence (e.g., ShinyHunters, Scattered Spider)
 // Logic: Compares 24-hour MFA changes against a 90-day historical baseline of successful user logins.
 // Persistance / Device Change / Post Compromise - so they can come and go whenever they want.
+// Register UnAuth MFA from New Locations
 
 let UserHistory = SigninLogs
     | where TimeGenerated > ago(90d)
