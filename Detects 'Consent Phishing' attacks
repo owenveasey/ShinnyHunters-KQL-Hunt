@@ -1,4 +1,4 @@
-// T1136 - Search for new OAuth permissions in Google Workspace or Office 365
+// T1136 - Inital Access - Search for new OAuth permissions in Google Workspace or Office 365
 OfficeActivity
 | where Operation == "ConsentToApplication"
 | extend Scopes = parse_json(ExtendedProperties).Scopes
