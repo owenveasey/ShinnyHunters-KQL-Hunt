@@ -1,6 +1,11 @@
-// T1136 - Inital Access - Search for new OAuth permissions in Google Workspace or Office 365
+/ T1136 - Initial Access - Search for new OAuth permissions in Google Workspace or Office 365
+// Step 1: Look at the OfficeActivity table (logs for O365, Teams, SharePoint, etc.)
 OfficeActivity
+// Step 2: Filter for the specific action where a user grants permission to an app
 | where Operation == "ConsentToApplication"
+// Step 3: Extract the 'Scopes' (specific permissions) from the nested JSON data
 | extend Scopes = parse_json(ExtendedProperties).Scopes
+// Step 4: Focus ONLY on high-risk permissions that attackers love to steal
 | where Scopes has_any ("full_access", "mail.read", "crm.data.read")
+// Step 5: Clean up the view to show only the most important "Who, What, and When" info
 | project TimeGenerated, UserId, ClientAppId, Scopes, Operation
