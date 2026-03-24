@@ -1,11 +1,11 @@
-/ T1136 - Initial Access - Search for new OAuth permissions in Google Workspace or Office 365
-// Step 1: Look at the OfficeActivity table (logs for O365, Teams, SharePoint, etc.)
+// T1566.002 - Hunt for OAuth Phishing (User granting app access)
 OfficeActivity
-// Step 2: Filter for the specific action where a user grants permission to an app
+// Look for the specific event where a user clicks "Accept" on an app
 | where Operation == "ConsentToApplication"
-// Step 3: Extract the 'Scopes' (specific permissions) from the nested JSON data
+// Extract the permissions (Scopes) and App Name from the raw log data
 | extend Scopes = parse_json(ExtendedProperties).Scopes
-// Step 4: Focus ONLY on high-risk permissions that attackers love to steal
+| extend ClientAppName = tostring(parse_json(ExtendedProperties).Application)
+// Filter for dangerous permissions like full mailbox or CRM access
 | where Scopes has_any ("full_access", "mail.read", "crm.data.read")
-// Step 5: Clean up the view to show only the most important "Who, What, and When" info
-| project TimeGenerated, UserId, ClientAppId, Scopes, Operation
+// Display the key info: Who, What App, and What Permissions
+| project TimeGenerated, UserId, ClientAppName, ClientAppId, Scopes, Operation, ClientIP
